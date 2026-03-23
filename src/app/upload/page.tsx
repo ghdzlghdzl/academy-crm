@@ -8,7 +8,7 @@ type Step = 'upload' | 'stt' | 'analyze' | 'review' | 'done';
 
 const STEPS = [
   { key: 'upload', label: '녹취 파일 업로드' },
-  { key: 'stt', label: '음성 텍스트 변환 중...' },
+  { key: 'stt', label: '텍스트 변환 중...' },
   { key: 'analyze', label: 'AI 메모 생성 중...' },
   { key: 'review', label: '결과 확인' },
   { key: 'done', label: '저장 완료' },
@@ -30,6 +30,41 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [memoCopied, setMemoCopied] = useState(false);
+
+  // 메모 양식 생성 함수
+  const generateMemoFormat = (a: AnalysisResult): string => {
+    return `*컨텍자 : ${a.customerName || ''}
+*본인 확인 및 문의 여부 체크 : ${a.needs ? '문의 확인 - ' + a.needs : ''}
+*배워보시려는 계기 및 수강 희망 시기 : ${a.currentSituation || ''}${a.consultationDate ? ' / ' + a.consultationDate + ' 수강 희망' : ''}
+*분야 경험 및 수강 경험 유/무 : ${a.currentSituation || '확인 필요'}
+*현재 거주지 및 평소 스케줄 어떤지 (가용시간체크) : ${a.preferredTime || '확인 필요'}
+*상담 명분 제시 및 상담 일정 확정 : ${a.consultationBooked ? '상담 확정' : '미확정'}${a.consultationDate ? ' - ' + a.consultationDate : ''}
+*이외 상담내용(특이사항) : ${[a.subject, a.grade, a.notes].filter(Boolean).join(' / ') || ''}
+* 수강료 / 시간표에 대한 나의 응대 :
+* 같이 방문하실 지인 / 기타 특이사항 : ${a.notes || ''}
+* 통화시간 : ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
+  const handleCopyMemo = async () => {
+    if (!analysis) return;
+    const memo = generateMemoFormat(analysis);
+    try {
+      await navigator.clipboard.writeText(memo);
+      setMemoCopied(true);
+      setTimeout(() => setMemoCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = memo;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setMemoCopied(true);
+      setTimeout(() => setMemoCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/customers').then(res => res.json()).then(setCustomers);
@@ -159,7 +194,7 @@ export default function UploadPage() {
   const currentStep = stepIndex(step);
 
   return (
-    <div className="max-w-[720px] mx-auto px-8 py-10">
+    <div className="max-w-[1200px] mx-auto px-8 py-10">
       {/* Header */}
       <div className="mb-8 animate-fade-up animate-fade-up-1">
         <h1 className="text-title text-apple-text">녹취 업로드</h1>
@@ -308,7 +343,7 @@ export default function UploadPage() {
         <div className="bg-white rounded-apple-xl shadow-card p-16 text-center animate-fade-up animate-fade-up-1">
           <div className="w-12 h-12 border-2 border-apple-accent border-t-transparent rounded-full mx-auto" style={{ animation: 'spin 0.8s linear infinite' }} />
           <p className="mt-5 text-headline text-apple-text">
-            {step === 'stt' ? '음성을 텍스트로 변환 중...' : 'AI가 내용을 분석 중...'}
+            {step === 'stt' ? '텍스트 변환 중...' : 'AI가 내용을 분석 중...'}
           </p>
           <p className="mt-2 text-caption-text text-apple-sub">잠시만 기다려주세요</p>
         </div>
@@ -319,61 +354,95 @@ export default function UploadPage() {
         <div className="space-y-6 animate-fade-up animate-fade-up-1">
           {/* Transcript */}
           <div className="bg-white rounded-apple-xl shadow-card p-6">
-            <h2 className="text-headline text-apple-text mb-3">STT 결과</h2>
+            <h2 className="text-headline text-apple-text mb-3">텍스트 변환</h2>
             <div className="bg-apple-hover rounded-apple-md p-4 text-[14px] text-apple-sub max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
               {transcript}
             </div>
           </div>
 
-          {/* Analysis Result */}
-          <div className="bg-white rounded-apple-xl shadow-card p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-headline text-apple-text">AI 분석 결과</h2>
-              <span className="h-[22px] px-2.5 rounded-pill bg-status-booked-bg text-status-booked text-[12px] font-medium flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                완료
-              </span>
+          {/* AI 분석 + 메모 양식 - 2컬럼 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Analysis Result */}
+            <div className="bg-white rounded-apple-xl shadow-card p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-headline text-apple-text">AI 분석 결과</h2>
+                <span className="h-[22px] px-2.5 rounded-pill bg-status-booked-bg text-status-booked text-[12px] font-medium flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  완료
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FieldInput label="고객 이름" value={analysis.customerName || ''} onChange={v => setAnalysis(a => a && ({ ...a, customerName: v }))} />
+                <FieldInput label="학년" value={analysis.grade || ''} onChange={v => setAnalysis(a => a && ({ ...a, grade: v }))} />
+                <FieldInput label="과목" value={analysis.subject || ''} onChange={v => setAnalysis(a => a && ({ ...a, subject: v }))} />
+                <FieldInput label="희망 시간대" value={analysis.preferredTime || ''} onChange={v => setAnalysis(a => a && ({ ...a, preferredTime: v }))} />
+                <div className="col-span-2">
+                  <FieldInput label="고객 니즈" value={analysis.needs || ''} onChange={v => setAnalysis(a => a && ({ ...a, needs: v }))} textarea />
+                </div>
+                <div className="col-span-2">
+                  <FieldInput label="현재 상황" value={analysis.currentSituation || ''} onChange={v => setAnalysis(a => a && ({ ...a, currentSituation: v }))} textarea />
+                </div>
+                <div>
+                  <label className="text-label-text text-apple-accent uppercase tracking-wider">상담 예약</label>
+                  <select
+                    className="w-full mt-1.5 h-[44px] px-3 border border-apple-border rounded-apple-md text-[14px] text-apple-text focus:outline-none focus:border-apple-accent focus:ring-[3px] focus:ring-apple-accent-light transition-all"
+                    value={analysis.consultationBooked ? 'yes' : 'no'}
+                    onChange={e => setAnalysis(a => a && ({ ...a, consultationBooked: e.target.value === 'yes' }))}
+                  >
+                    <option value="no">NO</option>
+                    <option value="yes">YES</option>
+                  </select>
+                </div>
+                <FieldInput label="상담 날짜" value={analysis.consultationDate || ''} onChange={v => setAnalysis(a => a && ({ ...a, consultationDate: v }))} type="date" />
+                <FieldInput label="팔로업 날짜" value={analysis.followUpDate || ''} onChange={v => setAnalysis(a => a && ({ ...a, followUpDate: v }))} type="date" />
+                <div>
+                  <label className="text-label-text text-apple-accent uppercase tracking-wider">상태</label>
+                  <select
+                    className="w-full mt-1.5 h-[44px] px-3 border border-apple-border rounded-apple-md text-[14px] text-apple-text focus:outline-none focus:border-apple-accent focus:ring-[3px] focus:ring-apple-accent-light transition-all"
+                    value={analysis.status}
+                    onChange={e => setAnalysis(a => a && ({ ...a, status: e.target.value as CustomerStatus }))}
+                  >
+                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <FieldInput label="다음 액션" value={analysis.nextAction || ''} onChange={v => setAnalysis(a => a && ({ ...a, nextAction: v }))} textarea />
+                </div>
+                <div className="col-span-2">
+                  <FieldInput label="특이사항" value={analysis.notes || ''} onChange={v => setAnalysis(a => a && ({ ...a, notes: v }))} textarea />
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FieldInput label="고객 이름" value={analysis.customerName || ''} onChange={v => setAnalysis(a => a && ({ ...a, customerName: v }))} />
-              <FieldInput label="학년" value={analysis.grade || ''} onChange={v => setAnalysis(a => a && ({ ...a, grade: v }))} />
-              <FieldInput label="과목" value={analysis.subject || ''} onChange={v => setAnalysis(a => a && ({ ...a, subject: v }))} />
-              <FieldInput label="희망 시간대" value={analysis.preferredTime || ''} onChange={v => setAnalysis(a => a && ({ ...a, preferredTime: v }))} />
-              <div className="col-span-2">
-                <FieldInput label="고객 니즈" value={analysis.needs || ''} onChange={v => setAnalysis(a => a && ({ ...a, needs: v }))} textarea />
-              </div>
-              <div className="col-span-2">
-                <FieldInput label="현재 상황" value={analysis.currentSituation || ''} onChange={v => setAnalysis(a => a && ({ ...a, currentSituation: v }))} textarea />
-              </div>
-              <div>
-                <label className="text-label-text text-apple-accent uppercase tracking-wider">상담 예약</label>
-                <select
-                  className="w-full mt-1.5 h-[44px] px-3 border border-apple-border rounded-apple-md text-[14px] text-apple-text focus:outline-none focus:border-apple-accent focus:ring-[3px] focus:ring-apple-accent-light transition-all"
-                  value={analysis.consultationBooked ? 'yes' : 'no'}
-                  onChange={e => setAnalysis(a => a && ({ ...a, consultationBooked: e.target.value === 'yes' }))}
+
+            {/* 메모 양식 */}
+            <div className="bg-white rounded-apple-xl shadow-card p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-headline text-apple-text">메모 양식</h2>
+                <button
+                  onClick={handleCopyMemo}
+                  className={`btn-press h-[32px] px-4 text-[12px] font-medium rounded-pill flex items-center gap-1.5 transition-all ${
+                    memoCopied
+                      ? 'bg-status-booked-bg text-status-booked'
+                      : 'bg-apple-accent text-white hover:bg-apple-accent-hover'
+                  }`}
                 >
-                  <option value="no">NO</option>
-                  <option value="yes">YES</option>
-                </select>
+                  {memoCopied ? (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      복사 완료!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                      메모 전체 복사
+                    </>
+                  )}
+                </button>
               </div>
-              <FieldInput label="상담 날짜" value={analysis.consultationDate || ''} onChange={v => setAnalysis(a => a && ({ ...a, consultationDate: v }))} type="date" />
-              <FieldInput label="팔로업 날짜" value={analysis.followUpDate || ''} onChange={v => setAnalysis(a => a && ({ ...a, followUpDate: v }))} type="date" />
-              <div>
-                <label className="text-label-text text-apple-accent uppercase tracking-wider">상태</label>
-                <select
-                  className="w-full mt-1.5 h-[44px] px-3 border border-apple-border rounded-apple-md text-[14px] text-apple-text focus:outline-none focus:border-apple-accent focus:ring-[3px] focus:ring-apple-accent-light transition-all"
-                  value={analysis.status}
-                  onChange={e => setAnalysis(a => a && ({ ...a, status: e.target.value as CustomerStatus }))}
-                >
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <div className="bg-gray-50 rounded-apple-md p-5 text-[13px] text-gray-700 leading-[2.2] whitespace-pre-wrap font-mono border border-gray-100">
+                {generateMemoFormat(analysis)}
               </div>
-              <div className="col-span-2">
-                <FieldInput label="다음 액션" value={analysis.nextAction || ''} onChange={v => setAnalysis(a => a && ({ ...a, nextAction: v }))} textarea />
-              </div>
-              <div className="col-span-2">
-                <FieldInput label="특이사항" value={analysis.notes || ''} onChange={v => setAnalysis(a => a && ({ ...a, notes: v }))} textarea />
-              </div>
+              <p className="text-[11px] text-apple-hint mt-3">* AI 분석 결과를 수정하면 메모 내용도 자동 반영됩니다</p>
             </div>
           </div>
 
