@@ -446,7 +446,7 @@ export default function ConsultationPage() {
                     </p>
                   </div>
                   <div className="w-[240px] flex-shrink-0">
-                    <SectionImage keyword={section.imageKeyword} visual={visual} />
+                    <SectionImage keyword={section.imageKeyword} visual={visual} index={idx} />
                   </div>
                 </div>
               </div>
@@ -481,9 +481,12 @@ export default function ConsultationPage() {
   );
 }
 
-function SectionImage({ keyword, visual }: { keyword: string; visual: typeof SECTION_VISUALS[number] }) {
+function SectionImage({ keyword, visual, index }: { keyword: string; visual: typeof SECTION_VISUALS[number]; index: number }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ', professional photo, high quality, realistic')}?width=480&height=360&seed=${index + 1}&nologo=true`;
 
   if (failed) {
     return (
@@ -503,15 +506,26 @@ function SectionImage({ keyword, visual }: { keyword: string; visual: typeof SEC
       {!loaded && (
         <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${visual.bg}`}>
           <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+          <span className="text-[11px] text-gray-400 absolute bottom-3">이미지 생성 중...</span>
         </div>
       )}
       <img
-        src={`/api/image?q=${encodeURIComponent(keyword)}`}
+        src={imageUrl}
         alt={keyword}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={() => setFailed(true)}
+        onError={() => {
+          if (retryCount < 2) {
+            setRetryCount(prev => prev + 1);
+            setTimeout(() => {
+              const img = document.querySelector(`img[alt="${keyword}"]`) as HTMLImageElement;
+              if (img) img.src = imageUrl + `&retry=${retryCount + 1}`;
+            }, 2000 * (retryCount + 1));
+          } else {
+            setFailed(true);
+          }
+        }}
       />
     </div>
   );

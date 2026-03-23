@@ -5,6 +5,14 @@ const nextConfig = {
       bodySizeLimit: '25mb',
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.pollinations.ai',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
