@@ -75,13 +75,6 @@ export async function POST(req: NextRequest) {
       "content": "상세 내용 (3-5문장으로 전문적으로 작성)",
       "imageKeyword": "이 섹션에 어울리는 이미지를 위한 영어 키워드 (예: 'student studying mathematics classroom')"
     }
-  ],
-  "youtubeRecommendations": [
-    {
-      "title": "채널/콘텐츠 한글 제목 (예: 포토샵 기초 강좌)",
-      "searchQuery": "YouTube 검색 쿼리 (예: 포토샵 기초 강의 튜토리얼)",
-      "description": "이 콘텐츠를 추천하는 이유 1줄 설명"
-    }
   ]
 }
 
@@ -102,10 +95,7 @@ export async function POST(req: NextRequest) {
 - 해당 자격증/기술의 실질적 활용처와 커리어 가치를 상세히 설명
 - 해당 분야의 최신 업계 동향, 시장 뉴스, 기술 트렌드를 포함 (실제 근거 있는 내용)
 - 예시: "2025년 기준 디자인 분야 평균 연봉 3,800만원", "국내 IT 인력 부족 약 16만명" 등 실제 통계 활용
-- 학원의 장점, 맞춤 커리큘럼, 학습 방법, 성과 사례, 학습 환경도 포함하되 시간표 관련은 제외
-
-- youtubeRecommendations는 3~5개 생성하며, 해당 과목/분야에 맞는 교육용 YouTube 검색 쿼리를 포함
-- 검색 쿼리는 한국어 또는 영어로 학습에 도움이 되는 콘텐츠를 찾을 수 있도록 작성`,
+- 학원의 장점, 맞춤 커리큘럼, 학습 방법, 성과 사례, 학습 환경도 포함하되 시간표 관련은 제외`,
       },
       {
         role: 'user',

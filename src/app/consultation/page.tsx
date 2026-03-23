@@ -9,17 +9,10 @@ interface Section {
   imageKeyword: string;
 }
 
-interface YouTubeRecommendation {
-  title: string;
-  searchQuery: string;
-  description: string;
-}
-
 interface ConsultationMaterial {
   title: string;
   subtitle: string;
   sections: Section[];
-  youtubeRecommendations?: YouTubeRecommendation[];
 }
 
 const SECTION_VISUALS = [
@@ -209,35 +202,6 @@ export default function ConsultationPage() {
           fontSize: 9, color: 'BDBDBD', align: 'center',
         });
       });
-
-      // YouTube recommendations slide
-      if (material.youtubeRecommendations && material.youtubeRecommendations.length > 0) {
-        const ytSlide = pptx.addSlide();
-        ytSlide.background = { fill: 'FFFFFF' };
-        ytSlide.addShape(pptx.ShapeType.rect, {
-          x: 0, y: 0, w: '100%', h: 0.08,
-          fill: { type: 'solid', color: 'FF0000' },
-        });
-        ytSlide.addText('추천 YouTube 학습 채널', {
-          x: 0.5, y: 0.4, w: 12, h: 0.7,
-          fontSize: 24, bold: true, color: '1a237e',
-        });
-        ytSlide.addShape(pptx.ShapeType.rect, {
-          x: 0.5, y: 1.2, w: 12, h: 0.02,
-          fill: { type: 'solid', color: 'E8EAF6' },
-        });
-        material.youtubeRecommendations.forEach((rec, i) => {
-          const yPos = 1.5 + i * 1.1;
-          ytSlide.addText(`▶  ${rec.title}`, {
-            x: 0.7, y: yPos, w: 11.5, h: 0.4,
-            fontSize: 16, bold: true, color: 'D32F2F',
-          });
-          ytSlide.addText(rec.description, {
-            x: 1.1, y: yPos + 0.4, w: 11, h: 0.4,
-            fontSize: 12, color: '757575',
-          });
-        });
-      }
 
       // Footer slide
       const footerSlide = pptx.addSlide();
@@ -482,68 +446,13 @@ export default function ConsultationPage() {
                     </p>
                   </div>
                   <div className="w-[240px] flex-shrink-0">
-                    <div className="w-full h-[180px] rounded-xl overflow-hidden shadow-sm border border-gray-100 relative bg-gray-100">
-                      <img
-                        src={`https://image.pollinations.ai/prompt/${encodeURIComponent(section.imageKeyword + ', professional, high quality, education, clean background')}?width=480&height=360&nologo=true`}
-                        alt={section.imageKeyword}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          if (target.parentElement) {
-                            target.parentElement.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br ${visual.bg}"><div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${visual.from} ${visual.to} flex items-center justify-center shadow-md mb-3"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${visual.icon}" /></svg></div><span class="text-[12px] font-medium text-gray-400 px-4 text-center">${section.imageKeyword}</span></div>`;
-                          }
-                        }}
-                      />
-                    </div>
+                    <SectionImage keyword={section.imageKeyword} visual={visual} />
                   </div>
                 </div>
               </div>
             </div>
           );
         })}
-
-        {/* YouTube Recommendations - hidden in print */}
-        {material.youtubeRecommendations && material.youtubeRecommendations.length > 0 && (
-          <div className="px-12 py-10 bg-white print:hidden">
-            <div className="max-w-[750px] mx-auto">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                  </svg>
-                </div>
-                <h2 className="text-[22px] font-bold text-gray-900">추천 YouTube 학습 채널</h2>
-              </div>
-              <div className="grid gap-3">
-                {material.youtubeRecommendations.map((rec, idx) => (
-                  <a
-                    key={idx}
-                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(rec.searchQuery)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-red-200 hover:bg-red-50/50 transition-all group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
-                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-semibold text-gray-900 group-hover:text-red-600 transition-colors">{rec.title}</div>
-                      <div className="text-[13px] text-gray-500 mt-0.5">{rec.description}</div>
-                    </div>
-                    <svg className="w-4 h-4 text-gray-300 group-hover:text-red-400 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Footer / Contact page */}
         <div className="px-12 py-16 bg-gradient-to-br from-gray-900 to-gray-800 text-white text-center print:break-before-page">
@@ -569,5 +478,41 @@ export default function ConsultationPage() {
       {/* Bottom spacer */}
       <div className="print:hidden h-20" />
     </>
+  );
+}
+
+function SectionImage({ keyword, visual }: { keyword: string; visual: typeof SECTION_VISUALS[number] }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div className={`w-full h-[180px] rounded-xl bg-gradient-to-br ${visual.bg} flex flex-col items-center justify-center shadow-sm border border-gray-100`}>
+        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${visual.from} ${visual.to} flex items-center justify-center shadow-md mb-3`}>
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={visual.icon} />
+          </svg>
+        </div>
+        <span className="text-[12px] font-medium text-gray-400 px-4 text-center">{keyword}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-[180px] rounded-xl overflow-hidden shadow-sm border border-gray-100 relative bg-gray-100">
+      {!loaded && (
+        <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${visual.bg}`}>
+          <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      )}
+      <img
+        src={`/api/image?q=${encodeURIComponent(keyword)}`}
+        alt={keyword}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+    </div>
   );
 }
