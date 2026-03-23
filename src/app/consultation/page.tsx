@@ -282,14 +282,14 @@ export default function ConsultationPage() {
 
             {/* Summary info cards */}
             <div className="flex justify-center gap-4 mt-10">
-              {[
-                grade && { label: '학년', value: grade },
-                subject && { label: '과목', value: subject },
-                currentSituation && { label: '현재 상황', value: currentSituation },
-              ].filter(Boolean).map((item, i) => (
+              {([
+                grade ? { label: '학년', value: grade } : null,
+                subject ? { label: '과목', value: subject } : null,
+                currentSituation ? { label: '현재 상황', value: currentSituation } : null,
+              ].filter((item): item is { label: string; value: string } => item !== null)).map((item, i) => (
                 <div key={i} className="px-5 py-3 rounded-xl bg-white/80 border border-gray-100 shadow-sm">
-                  <div className="text-[11px] text-gray-400 uppercase tracking-wider">{item!.label}</div>
-                  <div className="text-[15px] font-semibold text-gray-800 mt-0.5">{item!.value}</div>
+                  <div className="text-[11px] text-gray-400 uppercase tracking-wider">{item.label}</div>
+                  <div className="text-[15px] font-semibold text-gray-800 mt-0.5">{item.value}</div>
                 </div>
               ))}
             </div>
