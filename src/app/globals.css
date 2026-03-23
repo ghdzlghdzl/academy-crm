@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  /* Colors */
+  --color-bg-primary: #F5F5F7;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F0F0F2;
+  --color-bg-dark: #1D1D1F;
+  --color-text-primary: #1D1D1F;
+  --color-text-secondary: #6E6E73;
+  --color-text-tertiary: #AEAEB2;
+  --color-text-white: #FFFFFF;
+  --color-accent: #0071E3;
+  --color-accent-hover: #0077ED;
+  --color-accent-light: #E8F2FF;
+  --color-status-new: #FF9F0A;
+  --color-status-called: #0071E3;
+  --color-status-booked: #30D158;
+  --color-status-done: #636366;
+  --color-status-registered: #BF5AF2;
+  --color-status-hold: #AEAEB2;
+  --color-danger: #FF3B30;
+  --color-border: rgba(0,0,0,0.08);
+
+  /* Typography */
+  --text-hero: 56px;
+  --text-title: 28px;
+  --text-headline: 20px;
+  --text-body: 15px;
+  --text-caption: 13px;
+  --text-label: 12px;
+
+  /* Shapes */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 8px 30px rgba(0,0,0,0.10);
+  --shadow-modal: 0 20px 60px rgba(0,0,0,0.18);
+  --blur-nav: blur(20px) saturate(180%);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, 'SF Pro Display', sans-serif;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.animate-fade-up-1 { animation-delay: 0ms; }
+.animate-fade-up-2 { animation-delay: 80ms; }
+.animate-fade-up-3 { animation-delay: 160ms; }
+.animate-fade-up-4 { animation-delay: 240ms; }
+.animate-fade-up-5 { animation-delay: 320ms; }
+
+.animate-count-up {
+  animation: countUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.animate-modal-in {
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, #E8E8EA 50%, var(--color-bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Button press */
+.btn-press:active {
+  transform: scale(0.97);
+  transition: transform 0.1s;
+}
+
+/* Card hover */
+.card-hover {
+  transition: var(--transition);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-tertiary);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Print */
+@media print {
+  nav, .no-print { display: none !important; }
+  body { background: white; margin: 0; padding: 0; }
+  .print\:hidden { display: none !important; }
+  .print\:break-after-page { break-after: page; }
+  .print\:break-before-page { break-before: page; }
+  .print\:break-inside-avoid { break-inside: avoid; }
+  .print\:max-w-none { max-width: none; }
+  .print\:mx-0 { margin-left: 0; margin-right: 0; }
+  .print\:min-h-\[90vh\] { min-height: 90vh; }
+}
