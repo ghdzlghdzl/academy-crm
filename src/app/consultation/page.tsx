@@ -482,13 +482,20 @@ export default function ConsultationPage() {
                     </p>
                   </div>
                   <div className="w-[240px] flex-shrink-0">
-                    <div className={`w-full h-[180px] rounded-xl bg-gradient-to-br ${visual.bg} flex flex-col items-center justify-center shadow-sm border border-gray-100`}>
-                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${visual.from} ${visual.to} flex items-center justify-center shadow-md mb-3`}>
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={visual.icon} />
-                        </svg>
-                      </div>
-                      <span className="text-[12px] font-medium text-gray-400 px-4 text-center">{section.imageKeyword}</span>
+                    <div className="w-full h-[180px] rounded-xl overflow-hidden shadow-sm border border-gray-100 relative bg-gray-100">
+                      <img
+                        src={`https://image.pollinations.ai/prompt/${encodeURIComponent(section.imageKeyword + ', professional, high quality, education, clean background')}?width=480&height=360&nologo=true`}
+                        alt={section.imageKeyword}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          if (target.parentElement) {
+                            target.parentElement.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br ${visual.bg}"><div class="w-16 h-16 rounded-2xl bg-gradient-to-br ${visual.from} ${visual.to} flex items-center justify-center shadow-md mb-3"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${visual.icon}" /></svg></div><span class="text-[12px] font-medium text-gray-400 px-4 text-center">${section.imageKeyword}</span></div>`;
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
