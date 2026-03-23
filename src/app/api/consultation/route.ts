@@ -75,6 +75,13 @@ export async function POST(req: NextRequest) {
       "content": "상세 내용 (3-5문장으로 전문적으로 작성)",
       "imageKeyword": "이 섹션에 어울리는 이미지를 위한 영어 키워드 (예: 'student studying mathematics classroom')"
     }
+  ],
+  "youtubeRecommendations": [
+    {
+      "title": "채널/콘텐츠 한글 제목 (예: 포토샵 기초 강좌)",
+      "searchQuery": "YouTube 검색 쿼리 (예: 포토샵 기초 강의 튜토리얼)",
+      "description": "이 콘텐츠를 추천하는 이유 1줄 설명"
+    }
   ]
 }
 
@@ -84,7 +91,9 @@ export async function POST(req: NextRequest) {
 - 고객 정보에 맞춰 개인화된 내용 작성
 - imageKeyword는 교육/학습 관련 실사 이미지를 생성할 수 있는 영어 키워드
 - 전문적이고 신뢰감 있는 톤으로 작성
-- 구체적인 수치나 방법론을 포함하여 설득력 있게 작성`,
+- 구체적인 수치나 방법론을 포함하여 설득력 있게 작성
+- youtubeRecommendations는 3~5개 생성하며, 해당 과목/분야에 맞는 교육용 YouTube 검색 쿼리를 포함
+- 검색 쿼리는 한국어 또는 영어로 학습에 도움이 되는 콘텐츠를 찾을 수 있도록 작성`,
       },
       {
         role: 'user',

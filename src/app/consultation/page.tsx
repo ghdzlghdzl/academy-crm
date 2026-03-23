@@ -9,10 +9,17 @@ interface Section {
   imageKeyword: string;
 }
 
+interface YouTubeRecommendation {
+  title: string;
+  searchQuery: string;
+  description: string;
+}
+
 interface ConsultationMaterial {
   title: string;
   subtitle: string;
   sections: Section[];
+  youtubeRecommendations?: YouTubeRecommendation[];
 }
 
 const SECTION_VISUALS = [
@@ -42,6 +49,7 @@ export default function ConsultationPage() {
   const [material, setMaterial] = useState<ConsultationMaterial | null>(null);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
+  const [pptDownloading, setPptDownloading] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('consultationData');
@@ -121,6 +129,143 @@ export default function ConsultationPage() {
       alert('PDF 다운로드 중 오류가 발생했습니다. 프린트 기능을 이용해주세요.');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handlePptDownload = async () => {
+    if (!material) return;
+    setPptDownloading(true);
+    try {
+      // Use Function-based dynamic import to avoid webpack static analysis of node: modules
+      const pptxgenjs = (await (new Function('return import("pptxgenjs")'))()).default;
+      const pptx = new pptxgenjs();
+      pptx.layout = 'LAYOUT_WIDE';
+
+      // Cover slide
+      const coverSlide = pptx.addSlide();
+      coverSlide.background = { fill: '1a237e' };
+      coverSlide.addShape(pptx.ShapeType.rect, {
+        x: 0, y: 0, w: '100%', h: 0.15,
+        fill: { type: 'solid', color: '3949ab' },
+      });
+      coverSlide.addShape(pptx.ShapeType.rect, {
+        x: 0, y: '95%', w: '100%', h: 0.15,
+        fill: { type: 'solid', color: '3949ab' },
+      });
+      coverSlide.addText('SBS', {
+        x: 4.5, y: 1.0, w: 4, h: 1,
+        fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
+      });
+      coverSlide.addText(material.title, {
+        x: 1, y: 2.2, w: 11, h: 1,
+        fontSize: 28, bold: true, color: 'FFFFFF', align: 'center',
+      });
+      coverSlide.addText(material.subtitle, {
+        x: 1, y: 3.2, w: 11, h: 0.6,
+        fontSize: 16, color: 'B0BEC5', align: 'center',
+      });
+      const infoLines: string[] = [];
+      if (customerName) infoLines.push(`고객: ${customerName}`);
+      if (grade) infoLines.push(`학년: ${grade}`);
+      if (subject) infoLines.push(`과목: ${subject}`);
+      if (infoLines.length > 0) {
+        coverSlide.addText(infoLines.join('  |  '), {
+          x: 1, y: 4.2, w: 11, h: 0.5,
+          fontSize: 13, color: '90CAF9', align: 'center',
+        });
+      }
+      coverSlide.addText(new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }), {
+        x: 1, y: 5.0, w: 11, h: 0.4,
+        fontSize: 11, color: '78909C', align: 'center',
+      });
+
+      // Content slides
+      material.sections.forEach((section, idx) => {
+        const slide = pptx.addSlide();
+        slide.background = { fill: 'FFFFFF' };
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0, y: 0, w: '100%', h: 0.08,
+          fill: { type: 'solid', color: '3F51B5' },
+        });
+        slide.addText(String(idx + 1).padStart(2, '0'), {
+          x: 0.5, y: 0.4, w: 0.8, h: 0.8,
+          fontSize: 24, bold: true, color: '3F51B5', align: 'center',
+        });
+        slide.addText(section.title, {
+          x: 1.4, y: 0.5, w: 10, h: 0.6,
+          fontSize: 22, bold: true, color: '1a237e',
+        });
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0.5, y: 1.3, w: 12, h: 0.02,
+          fill: { type: 'solid', color: 'E8EAF6' },
+        });
+        slide.addText(section.content, {
+          x: 0.7, y: 1.6, w: 11.5, h: 4.5,
+          fontSize: 15, color: '424242', lineSpacingMultiple: 1.5,
+          valign: 'top',
+        });
+        slide.addText(`SBS아카데미컴퓨터아트학원 분당점  |  ${material.title}`, {
+          x: 0.5, y: 7.0, w: 12, h: 0.3,
+          fontSize: 9, color: 'BDBDBD', align: 'center',
+        });
+      });
+
+      // YouTube recommendations slide
+      if (material.youtubeRecommendations && material.youtubeRecommendations.length > 0) {
+        const ytSlide = pptx.addSlide();
+        ytSlide.background = { fill: 'FFFFFF' };
+        ytSlide.addShape(pptx.ShapeType.rect, {
+          x: 0, y: 0, w: '100%', h: 0.08,
+          fill: { type: 'solid', color: 'FF0000' },
+        });
+        ytSlide.addText('추천 YouTube 학습 채널', {
+          x: 0.5, y: 0.4, w: 12, h: 0.7,
+          fontSize: 24, bold: true, color: '1a237e',
+        });
+        ytSlide.addShape(pptx.ShapeType.rect, {
+          x: 0.5, y: 1.2, w: 12, h: 0.02,
+          fill: { type: 'solid', color: 'E8EAF6' },
+        });
+        material.youtubeRecommendations.forEach((rec, i) => {
+          const yPos = 1.5 + i * 1.1;
+          ytSlide.addText(`▶  ${rec.title}`, {
+            x: 0.7, y: yPos, w: 11.5, h: 0.4,
+            fontSize: 16, bold: true, color: 'D32F2F',
+          });
+          ytSlide.addText(rec.description, {
+            x: 1.1, y: yPos + 0.4, w: 11, h: 0.4,
+            fontSize: 12, color: '757575',
+          });
+        });
+      }
+
+      // Footer slide
+      const footerSlide = pptx.addSlide();
+      footerSlide.background = { fill: '1a237e' };
+      footerSlide.addText('SBS아카데미컴퓨터아트학원 분당점', {
+        x: 1, y: 2.0, w: 11, h: 1,
+        fontSize: 28, bold: true, color: 'FFFFFF', align: 'center',
+      });
+      footerSlide.addText('학생 한 명 한 명에게 최적화된 교육을 제공합니다', {
+        x: 1, y: 3.2, w: 11, h: 0.6,
+        fontSize: 15, color: 'B0BEC5', align: 'center',
+      });
+      footerSlide.addText('상담 문의는 담당자에게 연락주세요', {
+        x: 1, y: 4.5, w: 11, h: 0.5,
+        fontSize: 13, color: '78909C', align: 'center',
+      });
+      footerSlide.addText(`본 자료는 ${new Date().toLocaleDateString('ko-KR')} 기준으로 작성되었습니다`, {
+        x: 1, y: 5.5, w: 11, h: 0.4,
+        fontSize: 10, color: '546E7A', align: 'center',
+      });
+
+      const fileName = customerName ? `${customerName}_상담자료.pptx` : '상담자료.pptx';
+      await pptx.writeFile({ fileName });
+    } catch (err) {
+      console.error('PPT download error:', err);
+      alert('PPT 다운로드 중 오류가 발생했습니다.');
+    } finally {
+      setPptDownloading(false);
     }
   };
 
@@ -242,6 +387,23 @@ export default function ConsultationPage() {
               )}
             </button>
             <button
+              onClick={handlePptDownload}
+              disabled={pptDownloading}
+              className="btn-press h-[38px] px-5 bg-white border border-apple-border text-apple-text text-[13px] font-medium rounded-pill hover:bg-apple-hover disabled:opacity-40 transition-all flex items-center gap-2"
+            >
+              {pptDownloading ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-apple-accent border-t-transparent rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+                  다운로드 중...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  PPT 다운로드
+                </>
+              )}
+            </button>
+            <button
               onClick={handlePrint}
               className="btn-press h-[38px] px-5 bg-apple-accent text-white text-[13px] font-medium rounded-pill hover:bg-apple-accent-hover transition-all flex items-center gap-2"
             >
@@ -334,6 +496,47 @@ export default function ConsultationPage() {
             </div>
           );
         })}
+
+        {/* YouTube Recommendations - hidden in print */}
+        {material.youtubeRecommendations && material.youtubeRecommendations.length > 0 && (
+          <div className="px-12 py-10 bg-white print:hidden">
+            <div className="max-w-[750px] mx-auto">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </div>
+                <h2 className="text-[22px] font-bold text-gray-900">추천 YouTube 학습 채널</h2>
+              </div>
+              <div className="grid gap-3">
+                {material.youtubeRecommendations.map((rec, idx) => (
+                  <a
+                    key={idx}
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(rec.searchQuery)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-red-200 hover:bg-red-50/50 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[15px] font-semibold text-gray-900 group-hover:text-red-600 transition-colors">{rec.title}</div>
+                      <div className="text-[13px] text-gray-500 mt-0.5">{rec.description}</div>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-300 group-hover:text-red-400 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer / Contact page */}
         <div className="px-12 py-16 bg-gradient-to-br from-gray-900 to-gray-800 text-white text-center print:break-before-page">
